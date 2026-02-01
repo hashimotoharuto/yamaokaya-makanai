@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>賄い計算アプリ</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自作のCSSを読み込み -->
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container" style="max-width: 600px;">
+        <h1 class="text-center mb-4">🍜 賄い計算アプリ</h1>
+
+        <!-- メニュー選択エリア -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                メニュー選択
+            </div>
+            <div class="card-body">
+                <!-- JSでここにメニューが作られます -->
+                <div id="menu-list" class="list-group mb-3"></div>
+            </div>
+        </div>
+
+        <!-- ガチャエリア -->
+        <div class="card shadow-sm border-warning mb-4">
+            <div class="card-body text-center">
+                <h3 class="card-title text-warning mb-3">🎲 運命の1120円ガチャ</h3>
+                <div class="row g-2">
+                    <div class="col-12"><button onclick="runGacha('random')" class="btn btn-warning w-100 text-white fw-bold">🎲 完全ランダム</button></div>
+                    <div class="col-6"><button onclick="runGacha('noodle')" class="btn btn-outline-danger w-100">🍜 ラーメン必勝</button></div>
+                    <div class="col-6"><button onclick="runGacha('rice_set')" class="btn btn-outline-primary w-100">🍚 丼もの定食風</button></div>
+                    <div class="col-6"><button onclick="runGacha('topping')" class="btn btn-outline-success w-100">🥚 トッピング地獄</button></div>
+                    <div class="col-6"><button onclick="runGacha('carb')" class="btn btn-outline-secondary w-100">😈 炭水化物セット</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 画面下部の固定バー（ここにリセットボタンを追加しました！） -->
+    <div class="fixed-bottom-bar d-flex justify-content-between align-items-center container-fluid" style="max-width: 620px;">
+        <!-- 左側: リセットボタン -->
+        <button type="button" class="btn btn-outline-danger" onclick="resetSelection()">
+            ↺ リセット
+        </button>
+        
+        <!-- 右側: 合計金額 -->
+        <div class="text-end">
+            <div class="small text-muted">合計金額</div>
+            <div class="fs-2 fw-bold text-dark">¥<span id="displayTotal">0</span></div>
+        </div>
+    </div>
+
+    <!-- 結果表示モーダル -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">🧾 ガチャ結果発表</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="gacha-result-list" class="list-group list-group-flush mb-3"></ul>
+                    <div class="alert alert-info text-center">
+                        合計: <strong class="fs-4">¥<span id="gacha-total"></span></strong>
+                        <br>
+                        (残り予算: ¥<span id="gacha-budget-left"></span>)
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自作のJSを読み込み -->
+    <script src="script.js"></script>
+</body>
+</html>
