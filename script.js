@@ -1,6 +1,8 @@
+// script.js
+
 // --- 1. データ定義 ---
 const menuItems = [
-    { id: 1, name: '醤油ラーメン', price: 690, type: 'noodle' },
+   { id: 1, name: '醤油ラーメン', price: 690, type: 'noodle' },
     { id: 2, name: '醤油ネギラーメン', price: 840, type: 'noodle' },
     { id: 3, name: '醤油ぴりネギラーメン', price: 840, type: 'noodle' },
     { id: 4, name: '醤油チャーシューラーメン', price: 980, type: 'noodle' },
@@ -53,51 +55,81 @@ const menuItems = [
     { id: 51, name: '紅生姜', price: 50, type: 'topping' },
     { id: 52, name: '練り梅', price: 50, type: 'topping' },
     { id: 53, name: '背脂変更', price: 100, type: 'topping' },
+    { is: 54, name: '中盛', print: 150, type: 'topping'},
+    { is: 55, name: '大盛', print: 210, type: 'topping'},
 ];
 
-const MAX_BUDGET = 1120; // 上限金額
+const MAX_BUDGET = 1120; //上限金額の設定
+let quantities = {};
 
 // --- 2. 初期化処理 ---
 document.addEventListener('DOMContentLoaded', () => {
-    const menuListEl = document.getElementById('menu-list');
-    
-    // HTML生成
-    menuItems.forEach(item => {
-        const html = `
-            <label id="label-${item.id}" class="list-group-item d-flex justify-content-between align-items-center menu-item">
-                <span>
-                    <input class="form-check-input me-2 menu-checkbox" type="checkbox" 
-                           id="check-${item.id}"
-                           value="${item.id}" 
-                           data-price="${item.price}" 
-                           onchange="updateUI()">
-                    ${item.name}
-                </span>
-                <span class="badge bg-secondary rounded-pill">¥${item.price.toLocaleString()}</span>
-            </label>`;
-        menuListEl.insertAdjacentHTML('beforeend', html);
-    });
-    
-    updateUI(); // 初回計算（0円表示）
+    menuItems.forEach(item => { quantities[item.id] = 0; });
+    renderMenu();
+    updateUI();
 });
 
-// --- 3. 計算と表示更新（今回の一番重要な部分） ---
+function renderMenu() {
+    const menuListEl = document.getElementById('menu-list');
+    menuListEl.innerHTML = ''; 
+
+    menuItems.forEach(item => {
+        const html = `
+            <div id="row-${item.id}" class="list-group-item d-flex justify-content-between align-items-center menu-item">
+                <div>
+                    <div class="fw-bold">
+                        ${item.name}
+                        
+                        ${item.type === 'noodle' ? '<span class="badge bg-danger ms-1" style="font-size:0.7em">麺</span>' : ''}
+                    </div>
+                    <div class="text-secondary small">¥${item.price.toLocaleString()}</div>
+                </div>
+                
+                <div class="counter-area">
+                    <button class="btn btn-sm btn-outline-danger btn-minus" 
+                            onclick="updateQuantity(${item.id}, -1)" id="minus-${item.id}">－</button>
+                    
+                    <span class="count-display" id="count-${item.id}">0</span>
+                    
+                    <button class="btn btn-sm btn-outline-primary btn-plus" 
+                            onclick="updateQuantity(${item.id}, 1)" id="plus-${item.id}">＋</button>
+                </div>
+            </div>`;
+        menuListEl.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+// --- 3. 数量変更時の処理 ---
+function updateQuantity(id, change) {
+    const currentQty = quantities[id];
+    const newQty = currentQty + change;
+    
+    // アイテム情報を取得
+    const item = menuItems.find(i => i.id === id);
+
+    // 0未満にはしない
+    if (newQty < 0) return;
+
+    // 麺類なら「2個以上」にはできないようにする
+    if (item.type === 'noodle' && newQty > 1) return;
+
+    quantities[id] = newQty;
+    document.getElementById(`count-${id}`).innerText = newQty;
+    updateUI();
+}
+
+// --- 4. 計算と表示更新 ---
 function updateUI() {
     let total = 0;
-    
-    // 1. 現在の合計金額を計算
-    const checkboxes = document.querySelectorAll('.menu-checkbox');
-    checkboxes.forEach(cb => {
-        if (cb.checked) {
-            total += parseInt(cb.dataset.price);
-        }
+
+    menuItems.forEach(item => {
+        const qty = quantities[item.id];
+        total += item.price * qty;
     });
 
-    // 2. 合計表示を更新
     const totalEl = document.getElementById('displayTotal');
     totalEl.textContent = total.toLocaleString();
 
-    // 合計が上限を超えたら赤くするなどの装飾
     if (total > MAX_BUDGET) {
         totalEl.parentElement.classList.remove('text-dark');
         totalEl.parentElement.classList.add('text-danger');
@@ -106,39 +138,64 @@ function updateUI() {
         totalEl.parentElement.classList.add('text-dark');
     }
 
-    // 3. 【新機能】予算オーバー判定（グレーアウト処理）
+    // ボタン制御（ここがポイント）
     const remainingBudget = MAX_BUDGET - total;
 
-    checkboxes.forEach(cb => {
-        const price = parseInt(cb.dataset.price);
-        const label = document.getElementById('label-' + cb.value);
+    menuItems.forEach(item => {
+        const qty = quantities[item.id];
+        const minusBtn = document.getElementById(`minus-${item.id}`);
+        const plusBtn = document.getElementById(`plus-${item.id}`);
+        const row = document.getElementById(`row-${item.id}`);
 
-        // 「チェックされておらず」かつ「値段が残り予算より高い」場合
-        if (!cb.checked && price > remainingBudget) {
-            label.classList.add('dimmed'); // 暗くするクラスを追加
+        // マイナスボタン：0個なら押せない
+        minusBtn.disabled = (qty <= 0);
+
+        // プラスボタンの無効化条件
+        // 1. 予算オーバーする場合
+        // 2. 【追加】麺類ですでに1個選んでいる場合
+        let disablePlus = false;
+
+        if (item.price > remainingBudget) {
+            disablePlus = true;
+        }
+        if (item.type === 'noodle' && qty >= 1) {
+            disablePlus = true;
+        }
+
+        plusBtn.disabled = disablePlus;
+
+        // 行の見た目制御
+        // 1個も選んでなくて、かつ予算不足で買えない場合のみ薄くする
+        // (麺類で1個選んでボタンが押せなくなっている場合は、薄くしない)
+        if (qty === 0 && item.price > remainingBudget) {
+            row.style.opacity = '0.5';
+            row.style.backgroundColor = '#e9ecef';
         } else {
-            label.classList.remove('dimmed'); // 元に戻す
+            row.style.opacity = '1';
+            row.style.backgroundColor = '#fff';
         }
     });
 }
 
-// リセット機能
 function resetSelection() {
-    document.querySelectorAll('.menu-checkbox').forEach(cb => cb.checked = false);
+    menuItems.forEach(item => {
+        quantities[item.id] = 0;
+        document.getElementById(`count-${item.id}`).innerText = 0;
+    });
     updateUI();
 }
 
-// --- 4. ガチャ機能 ---
 function runGacha(mode) {
+    resetSelection();
     let currentTotal = 0;
-    let selected = [];
+    let selectedIds = [];
     let candidates = [...menuItems].sort(() => Math.random() - 0.5);
 
     const addFirst = (type) => {
         const foundIndex = candidates.findIndex(item => item.type === type && currentTotal + item.price <= MAX_BUDGET);
         if (foundIndex !== -1) {
             const item = candidates[foundIndex];
-            selected.push(item);
+            selectedIds.push(item.id);
             currentTotal += item.price;
             candidates.splice(foundIndex, 1);
         }
@@ -151,22 +208,28 @@ function runGacha(mode) {
 
     candidates.forEach(item => {
         if (currentTotal + item.price <= MAX_BUDGET) {
-            selected.push(item);
+            selectedIds.push(item.id);
             currentTotal += item.price;
         }
     });
 
-    showModal(selected, currentTotal);
+    selectedIds.forEach(id => {
+        quantities[id] = 1;
+        document.getElementById(`count-${id}`).innerText = 1;
+    });
+    updateUI();
+    showModal(selectedIds, currentTotal);
 }
 
-function showModal(items, total) {
+function showModal(ids, total) {
     const listEl = document.getElementById('gacha-result-list');
     listEl.innerHTML = '';
     
-    if (items.length === 0) {
+    if (ids.length === 0) {
         listEl.innerHTML = '<li class="list-group-item text-danger">条件に合う商品が見つかりませんでした</li>';
     } else {
-        items.forEach(item => {
+        ids.forEach(id => {
+            const item = menuItems.find(i => i.id === id);
             let badgeClass = 'bg-secondary';
             if(item.type === 'noodle') badgeClass = 'bg-danger';
             if(item.type === 'rice') badgeClass = 'bg-primary';
