@@ -55,8 +55,8 @@ const menuItems = [
     { id: 51, name: '紅生姜', price: 50, type: 'topping' },
     { id: 52, name: '練り梅', price: 50, type: 'topping' },
     { id: 53, name: '背脂変更', price: 100, type: 'topping' },
-    { is: 54, name: '中盛', print: 150, type: 'topping'},
-    { is: 55, name: '大盛', print: 210, type: 'topping'},
+    { id: 54, name: '中盛', price: 150, type: 'topping'},
+    { id: 55, name: '大盛', price: 210, type: 'topping'},
 ];
 
 const MAX_BUDGET = 1120; //上限金額の設定
