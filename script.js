@@ -62,6 +62,16 @@ const menuItems = [
 const MAX_BUDGET = 1120; //上限金額の設定
 let quantities = {};
 
+const NOODLE_REQUIRED_TOPPING_IDS = [53, 54, 55]; // 背脂変更, 中盛, 大盛
+
+function hasSelectedNoodle() {
+    return menuItems.some(item => item.type === 'noodle' && quantities[item.id] > 0);
+}
+
+function isNoodleRequiredTopping(itemId) {
+    return NOODLE_REQUIRED_TOPPING_IDS.includes(itemId);
+}
+
 // --- 2. 初期化処理 ---
 document.addEventListener('DOMContentLoaded', () => {
     menuItems.forEach(item => { quantities[item.id] = 0; });
@@ -138,8 +148,8 @@ function updateUI() {
         totalEl.parentElement.classList.add('text-dark');
     }
 
-    // ボタン制御（ここがポイント）
     const remainingBudget = MAX_BUDGET - total;
+    const noodleSelected = hasSelectedNoodle();
 
     menuItems.forEach(item => {
         const qty = quantities[item.id];
@@ -147,32 +157,41 @@ function updateUI() {
         const plusBtn = document.getElementById(`plus-${item.id}`);
         const row = document.getElementById(`row-${item.id}`);
 
-        // マイナスボタン：0個なら押せない
         minusBtn.disabled = (qty <= 0);
 
-        // プラスボタンの無効化条件
-        // 1. 予算オーバーする場合
-        // 2. 【追加】麺類ですでに1個選んでいる場合
         let disablePlus = false;
 
+        // 予算オーバーするなら追加不可
         if (item.price > remainingBudget) {
             disablePlus = true;
         }
+
+        // ラーメンは1個まで
         if (item.type === 'noodle' && qty >= 1) {
+            disablePlus = true;
+        }
+
+        // 背脂変更・中盛・大盛は、ラーメン未選択なら追加不可
+        if (isNoodleRequiredTopping(item.id) && !noodleSelected) {
             disablePlus = true;
         }
 
         plusBtn.disabled = disablePlus;
 
-        // 行の見た目制御
-        // 1個も選んでなくて、かつ予算不足で買えない場合のみ薄くする
-        // (麺類で1個選んでボタンが押せなくなっている場合は、薄くしない)
+        // 行の見た目を初期化
+        row.style.opacity = '1';
+        row.style.backgroundColor = '#fff';
+        row.classList.remove('noodle-required');
+
+        // 予算不足で未選択なら薄くする
         if (qty === 0 && item.price > remainingBudget) {
             row.style.opacity = '0.5';
             row.style.backgroundColor = '#e9ecef';
-        } else {
-            row.style.opacity = '1';
-            row.style.backgroundColor = '#fff';
+        }
+
+        // ラーメン必須トッピングで、まだラーメンが無い場合
+        if (qty === 0 && isNoodleRequiredTopping(item.id) && !noodleSelected) {
+            row.classList.add('noodle-required');
         }
     });
 }
@@ -248,4 +267,88 @@ function showModal(ids, total) {
     document.getElementById('gacha-budget-left').textContent = (MAX_BUDGET - total).toLocaleString();
     const myModal = new bootstrap.Modal(document.getElementById('resultModal'));
     myModal.show();
+}
+
+function showReceiptModal() {
+    const selectedItems = menuItems.filter(item => quantities[item.id] > 0);
+    const receiptEmptyEl = document.getElementById('receipt-empty');
+    const receiptContentEl = document.getElementById('receipt-content');
+    const receiptItemsEl = document.getElementById('receipt-items');
+    const receiptTotalEl = document.getElementById('receipt-total');
+    const receiptBudgetMessageEl = document.getElementById('receipt-budget-message');
+    const receiptSuggestionEl = document.getElementById('receipt-suggestion');
+
+    if (selectedItems.length === 0) {
+        receiptEmptyEl.classList.remove('d-none');
+        receiptContentEl.classList.add('d-none');
+        return;
+    }
+
+    receiptEmptyEl.classList.add('d-none');
+    receiptContentEl.classList.remove('d-none');
+    receiptItemsEl.innerHTML = '';
+
+    let total = 0;
+
+    selectedItems.forEach(item => {
+        const qty = quantities[item.id];
+        const subtotal = item.price * qty;
+        total += subtotal;
+
+        receiptItemsEl.insertAdjacentHTML('beforeend', `
+            <div class="receipt-row">
+                <div class="receipt-name">${item.name}</div>
+                <div class="receipt-qty">×${qty}</div>
+                <div class="receipt-price">¥${item.price.toLocaleString()}</div>
+                <div class="receipt-subtotal">¥${subtotal.toLocaleString()}</div>
+            </div>
+        `);
+    });
+
+    receiptTotalEl.textContent = total.toLocaleString();
+
+    const remainingBudget = MAX_BUDGET - total;
+
+    if (total > MAX_BUDGET) {
+        receiptBudgetMessageEl.innerHTML = `<span class="text-danger">予算オーバー: ¥${(total - MAX_BUDGET).toLocaleString()}</span>`;
+        receiptSuggestionEl.innerHTML = '';
+    } else {
+        receiptBudgetMessageEl.innerHTML = `<span class="text-success">残り予算: ¥${remainingBudget.toLocaleString()}</span>`;
+
+        const affordableItems = getAffordableItems(remainingBudget);
+
+        if (affordableItems.length === 0) {
+            receiptSuggestionEl.innerHTML = `
+                <div class="alert alert-secondary mt-3 mb-0">
+                    残り金額で買える商品はありません。
+                </div>
+            `;
+        } else {
+            const bestItem = affordableItems[0];
+            const itemNames = affordableItems
+                .slice(0, 6)
+                .map(item => item.name)
+                .join(' / ');
+
+            receiptSuggestionEl.innerHTML = `
+                <div class="alert alert-info mt-3 mb-0">
+                    <div class="fw-bold mb-1">残りの金額で買えるよ！</div>
+                    <div class="mb-2">おすすめ: <strong>${bestItem.name}</strong>（¥${bestItem.price.toLocaleString()}）</div>
+                    <div class="small text-muted">候補: ${itemNames}</div>
+                </div>
+            `;
+        }
+    }
+
+    const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+    receiptModal.show();
+}
+
+function getAffordableItems(remainingBudget) {
+    return menuItems
+        .filter(item => 
+            item.price <= remainingBudget &&
+            !NOODLE_REQUIRED_TOPPING_IDS.includes(item.id) // ←これ追加
+        )
+        .sort((a, b) => b.price - a.price);
 }

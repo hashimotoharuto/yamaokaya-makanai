@@ -31,3 +31,54 @@ body {
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
 }
+
+
+/* 選べない行の見た目 */
+.dimmed {
+    opacity: 0.4;
+    pointer-events: none;
+    background-color: #e9ecef !important;
+}
+
+/* ただしマイナスボタンは押せるようにしたいので、
+   行全体ではなく + ボタンだけ無効にする場合はJS側で制御 */
+.noodle-required {
+    opacity: 0.5;
+    background-color: #f1f3f5 !important;
+}
+
+/* レシート風 */
+.receipt-box {
+    background: #fff;
+    border: 1px dashed #999;
+    padding: 16px;
+    font-family: monospace;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px dotted #ddd;
+}
+
+.receipt-row:last-child {
+    border-bottom: none;
+}
+
+.receipt-name {
+    flex: 1;
+    word-break: break-word;
+}
+
+.receipt-qty,
+.receipt-price,
+.receipt-subtotal {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.fixed-bottom-bar .btn {
+    min-width: 90px;
+}
