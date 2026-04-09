@@ -82,3 +82,7 @@ body {
 .fixed-bottom-bar .btn {
     min-width: 90px;
 }
+
+#changelog-content {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}

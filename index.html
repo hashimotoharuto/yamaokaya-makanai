@@ -13,6 +13,12 @@
     <div class="container" style="max-width: 600px;">
         <h1 class="text-center mb-4"> 賄い計算アプリ</h1>
 
+        <div class="text-end mb-2">
+    <button class="btn btn-outline-secondary btn-sm" onclick="showChangelog()">
+        ℹ️ 更新履歴
+    </button>
+</div>
+
         <!-- メニュー選択エリア -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-danger text-white">
@@ -128,6 +134,21 @@
     </div>
 </div>
 
+
+<!-- 更新履歴モーダル -->
+<div class="modal fade" id="changelogModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">📋 アップデート履歴</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="changelog-content">
+                <!-- JSで生成 -->
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- 自作のJSを読み込み -->

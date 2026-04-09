@@ -59,6 +59,26 @@ const menuItems = [
     { id: 55, name: '大盛', price: 210, type: 'topping'},
 ];
 
+
+const CHANGELOG = [
+    {
+        date: "2026-04-10",
+        updates: [
+            "レシート表示機能を追加",
+            "残額で買える商品候補を表示",
+            "背脂変更・中盛・大盛はラーメン選択時のみ有効化"
+        ]
+    },
+    {
+        date: "2026-04-09",
+        updates: [
+            "1120円ガチャ機能を追加",
+            "メニュー選択UIを改善"
+        ]
+    }
+];
+
+
 const MAX_BUDGET = 1120; //上限金額の設定
 let quantities = {};
 
@@ -351,4 +371,28 @@ function getAffordableItems(remainingBudget) {
             !NOODLE_REQUIRED_TOPPING_IDS.includes(item.id) // ←これ追加
         )
         .sort((a, b) => b.price - a.price);
+}
+
+function showChangelog() {
+    const container = document.getElementById('changelog-content');
+    container.innerHTML = '';
+
+    CHANGELOG.forEach(entry => {
+        let html = `
+            <div class="mb-3">
+                <div class="fw-bold">${entry.date}</div>
+                <ul class="small mt-1">
+        `;
+
+        entry.updates.forEach(text => {
+            html += `<li>${text}</li>`;
+        });
+
+        html += `</ul></div>`;
+
+        container.insertAdjacentHTML('beforeend', html);
+    });
+
+    const modal = new bootstrap.Modal(document.getElementById('changelogModal'));
+    modal.show();
 }
